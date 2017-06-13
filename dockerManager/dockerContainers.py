@@ -16,5 +16,5 @@ class Container:
 
 if __name__ == '__main__':
     container =  Container()
-    container_info = container.start('centos', 'tail -f /etc/hosts', [8080])
+    container_info = container.start('ubuntu', 'tail -f /etc/hosts', [8080])
     print container_info
