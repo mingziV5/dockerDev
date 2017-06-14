@@ -8,7 +8,10 @@ sys.setdefaultencoding('utf8')
 
 configs = [{'domain': 'sc.edu88.com',
            'upstream': {'name': 'etoh','server': ['10.102.43.114:8081','10.102.43.115:8080']},
-           'location':'/'}]
+           'location':'/'},
+           {'domain': 'mp.sc.edu88.com',
+           'upstream': {'name': 'mp','server': ['10.102.43.120:8081','10.102.43.121:8080']},
+           'location':'/'} ]
 
 with open('/root/workspace/dockerDev/dockerManager/nginx.conf.tpl') as tpl_file:
     template = Template(tpl_file.read())

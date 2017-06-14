@@ -78,7 +78,7 @@ http {
         }
 
         location {{ server.location }} {
-                proxy_pass http://etoh;
+                proxy_pass http://{{ server.upstream.name }};
                 include proxy.conf;
         }
 
@@ -121,7 +121,7 @@ http {
         }
 
         location {{ server.location }} {
-                proxy_pass http://etoh;
+                proxy_pass http://{{ server.upstream.name }};
                 include proxy.conf;
         }
 
