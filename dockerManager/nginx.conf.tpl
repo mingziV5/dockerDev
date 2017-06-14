@@ -1,0 +1,177 @@
+user winupon winupon;
+
+worker_processes auto;
+worker_cpu_affinity auto;
+
+error_log logs/error.log;
+pid logs/nginx.pid;
+
+worker_rlimit_nofile 65535;
+
+events {
+    use epoll;
+    worker_connections 65535;
+}
+
+
+http {
+    include mime.types;
+    default_type application/octet-stream;
+    charset utf-8;
+    
+    server_names_hash_bucket_size 128;
+    client_header_buffer_size 4k;
+    large_client_header_buffers 4 4k;
+    client_max_body_size 8m;
+    
+    sendfile on;
+    tcp_nopush on;
+    
+    keepalive_timeout 120;
+
+   
+    open_file_cache max=102400 inactive=20s;
+    open_file_cache_min_uses 1;
+    open_file_cache_valid 30s;
+
+    tcp_nodelay on;
+    
+    gzip on;
+    gzip_min_length 1k;
+    gzip_buffers 4 16k;
+    gzip_http_version 1.0;
+    gzip_comp_level 2;
+    gzip_types text/plain application/x-javascript text/css application/xml;
+    gzip_vary on;
+
+    server {
+        listen 80 default; 
+        server_name _ www.mp.sc.edu88.com www.sc.edu88.com;
+        #add_header X-Frame-Options "DENY";
+        return 403;
+        #error_page 403 =/403.html;
+    } 
+
+{% for server in configs %}
+    upstream {{ server.upstream.name }} {
+        check interval=3000 rise=2 fall=5 timeout=1000 type=http;
+        check_http_send "HEAD / HTTP/1.0\r\n\r\n";
+        check_http_expect_alive http_2xx http_3xx http_4xx;
+
+        {% for host in server.upstream.server %}
+        server {{ host }}
+        {% endfor %}
+        session_sticky;
+    }
+
+    server {
+        listen      80;
+        server_name {{ server.domain }};
+        #expires     300d;
+        index index.html index.htm index.php redirect.htm ;
+        access_log    logs/access.{{ server.domain }}.log;
+
+        
+        #屏蔽不安全的http方法
+        if ($request_method !~ ^(GET|HEAD|POST)$ ) {
+            return 444;
+        }
+
+        location {{ server.location }} {
+                proxy_pass http://etoh;
+                include proxy.conf;
+        }
+
+        location /status {
+            stub_status             on;
+            access_log              off;
+            allow all;
+            deny  all;
+        }
+
+        location /tengine_status {
+	    check_status;
+            access_log off;
+        }
+      
+    }
+
+#https
+
+    server {
+        listen      443;
+        server_name {{ server.domain }};
+        ssl                  on;
+        ssl_certificate STAR.edu88.com.crt;
+        ssl_certificate_key STAR.edu88.com.key;
+        ssl_protocols  SSLv2 SSLv3 TLSv1;
+        #expires     300d;
+        index index.html index.htm index.php redirect.htm ;
+        access_log    logs/access.{{ server.domain }}.log;
+
+
+        #屏蔽不安全的http方法
+        if ($request_method !~ ^(GET|HEAD|POST)$ ) {
+            return 444;
+        }
+
+        #屏蔽cookie
+        if ($request_uri ~ "^(.*)COOKIE(.*)$" ) {
+            return 403;
+        }
+
+        location {{ server.location }} {
+                proxy_pass http://etoh;
+                include proxy.conf;
+        }
+
+        location /status {
+            stub_status             on;
+            access_log              off;
+            allow all;
+            deny  all;
+        }
+
+        location /tengine_status {
+            check_status;
+            access_log off;
+        }
+
+    }
+
+{% endfor %}
+
+    server {
+        listen       80;
+        server_name  file.sc.edu88.com;
+        #expires     30d;
+
+        index index.html index.htm index.php;
+        access_log    logs/access.log;
+
+        #location ~* \.(xls|wrf|xml|jpg|png|jpeg|bmp|ico|gif|txt|ver|html|swf|js|css|htm|ini|gz|exe|wmv|flv|apk|jar|ini) {
+
+        location / {
+                root /opt/data/;
+        }
+    }
+
+    server {
+        listen       443;
+        server_name  file.sc.edu88.com;
+        #expires     30d;
+        ssl                  on;
+        ssl_certificate STAR.sc.edu88.com.crt;
+        ssl_certificate_key STAR.sc.edu88.com.key;
+        ssl_protocols  SSLv2 SSLv3 TLSv1;
+        index index.html index.htm index.php;
+        access_log    logs/access.log;
+
+        #location ~* \.(xls|wrf|xml|jpg|png|jpeg|bmp|ico|gif|txt|ver|html|swf|js|css|htm|ini|gz|exe|wmv|flv|apk|jar|ini) {
+
+        location / {
+                root /opt/data/;
+        }
+    }
+
+}
