@@ -14,6 +14,8 @@ class Container:
         resp = self.cli.start(container = self.container.get('Id'))
         return resp
 
+
+
 if __name__ == '__main__':
     container =  Container()
     container_info = container.start('ubuntu', 'tail -f /etc/hosts', [8080])
